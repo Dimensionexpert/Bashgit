@@ -22,13 +22,7 @@ local path="$HOME/bashgit/scripts/*"
 
 }
 
-# shellName(){
-# local shellName=$(basename "$SHELL")
-# }
 
-# osName(){   
-# local osName=$(uname -s)
-# }
 
 addToPath() {
     local shellName=$(basename "$SHELL")

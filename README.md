@@ -8,7 +8,7 @@ A portable bash toolkit to simplify git workflows.
 
 ## Install
 ```bash
-git clone https://github.com/yourusername/bashgit.git
+git clone https://github.com/dimensionexpert/bashgit.git
 cd bashgit
 bash install
 ```
