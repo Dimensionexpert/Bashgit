@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+# Load helper functions
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/git_library"
+
+# Exit early if repo already exists
+if repoExists; then
+    echo "Repo already exists. Use gitPush to commit and push. love <3" >&2
+    exit 0
+fi
+
+# Repo doesn't exist, offer to create one
+echo "Repo does not exist" >&2
+if promptYN "Do you want to create a new repo?"; then
+    createRepo || exit 1
+else
+    echo "Then why the fuck did you use gitInit RETARD!" >&2
+    exit 1
+fi
+
+# Show and optionally rename current branch
+branchName || exit 1
+
+# Optionally create .gitignore
+if promptYN "Want to create a .gitignore?"; then
+    createGitignore || exit 1
+fi
+
+# Optionally create README.md
+if promptYN "Want to create a README.md?"; then
+    createReadme || exit 1
+fi
+
+# If no commits exist, offer to create initial commit
+if ! hasCommits; then
+    if promptYN "Do you want to make an initial commit?"; then
+        git add . || exit 1
+        git commit -m "Initial commit" || exit 1
+    fi
+fi

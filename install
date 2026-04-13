@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+checkPath() {
+    if [[ "$PATH" = *"$HOME/bashgit/scripts"* ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+
+mkExe() {
+
+local path="$HOME/bashgit/scripts/*"
+
+    for file in $path; do
+        if [[ -f "$file" &&  ! -x "$file" ]]; then
+            chmod +x "$file"
+            echo "Made $file executable"
+        fi
+    done
+
+}
+
+# shellName(){
+# local shellName=$(basename "$SHELL")
+# }
+
+# osName(){   
+# local osName=$(uname -s)
+# }
+
+addToPath() {
+    local shellName=$(basename "$SHELL")
+
+    if checkPath; then
+        echo "Path already contains $HOME/bashgit/scripts"
+        return 0
+    fi
+
+    case "$shellName" in
+        fish)
+            echo "fish_add_path $HOME/bashgit/scripts" >> "$HOME/.config/fish/config.fish"
+            ;;
+        zsh)
+            echo "export PATH=\"$HOME/bashgit/scripts:\$PATH\"" >> "$HOME/.zshrc"
+            ;;
+        bash)
+            echo "export PATH=\"$HOME/bashgit/scripts:\$PATH\"" >> "$HOME/.bashrc"
+            ;;
+        *)
+            echo "Unknown shell: $shellName" >&2
+            return 1
+            ;;
+    esac
+
+    echo "Added to PATH. Restart your terminal or source your config."
+}
+
+
+
+
+
+mkExe
+addToPath

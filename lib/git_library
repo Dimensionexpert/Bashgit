@@ -1,0 +1,204 @@
+#!/usr/bin/env bash
+
+# Prompt the user with a Yes/No question.
+# Returns:
+#   0 (success) if user answers yes
+#   1 (failure) if user answers no
+promptYN() {
+
+    local msg="${1:-"Want to continue?"}"
+    local ans=
+
+    while true; do
+        read -rp "$msg [Y/n]: " ans
+
+        case $ans in
+            [Yy]*) return 0 ;;
+            [Nn]*) return 1 ;;
+            *) echo "Can't you read the prompt?" ;;
+        esac
+    done
+}
+
+# Check if current directory is already a git repository
+# Returns 0 if .git directory exists, else 1
+repoExists() {
+    [ -d ".git" ]
+}
+
+# Initialize a git repository if one doesn't already exist
+createRepo() {
+
+    if repoExists; then
+        echo "Repo already exists" >&2
+        return 1
+    fi
+
+    git init -q || return 1
+}
+
+# Show current branch and optionally rename it
+branchName() {
+
+    local branch
+    local newBranch
+
+    branch=$(git branch --show-current)
+    branch="${branch:-"(no branch yet)"}"
+    echo "Current branch is $branch"
+
+    if promptYN "Do you want to change the branch name?"; then
+        read -rp "Enter new branch name: " newBranch
+        newBranch="${newBranch:-main}"
+        git branch -m "$newBranch" || return 1
+        echo "Branch name changed to $newBranch"
+    fi
+}
+
+# Create a .gitignore file if it doesn't exist
+createGitignore() {
+    if [ -f ".gitignore" ]; then
+        echo ".gitignore already exists" >&2
+        return 1
+    fi
+
+    touch .gitignore || return 1
+    echo ".gitignore created"
+}
+
+# Create a README.md file if it doesn't exist
+createReadme() {
+    if [ -f "README.md" ]; then
+        echo "README.md already exists" >&2
+        return 1
+    fi
+
+    touch README.md || return 1
+    echo "README.md created"
+}
+
+# Check if repository has at least one commit
+hasCommits() {
+    git rev-parse --verify HEAD >/dev/null 2>&1
+}
+
+# Stage files for commit
+# Usage:
+#   stageFiles -a         - stage all changes
+#   stageFiles -aq        - stage all quietly
+#   stageFiles -q <file>  - stage specific file quietly
+#   stageFiles <file>     - stage specific file
+stageFiles() {
+
+    local toAdd="$1"
+    local fileName="$2"
+    local stagedFiles
+
+    if [[ -z "$toAdd" ]]; then
+        echo "usage:"
+        echo "  stageFiles <file>     - stage specific file"
+        echo "  stageFiles -a         - stage all changes"
+        echo "  stageFiles -aq        - stage all quietly"
+        echo "  stageFiles -q <file>  - stage specific file quietly"
+        return 1
+    fi
+
+    case "$toAdd" in
+        -a)
+            git add .
+            stagedFiles=$(git diff --name-only --cached)
+            echo "Files staged:"
+            echo "$stagedFiles"
+            return 0
+            ;;
+
+        -aq)
+            git add .
+            return 0
+            ;;
+
+        -q)
+            if [[ -z "$fileName" ]]; then
+                echo "No file specified for quiet mode" >&2
+                return 1
+            fi
+            if [[ -f "$fileName" ]]; then
+                git add "$fileName"
+                return 0
+            else
+                echo "Not a valid file: $fileName" >&2
+                return 1
+            fi
+            ;;
+
+        *)
+            if [[ -f "$toAdd" ]]; then
+                git add "$toAdd"
+                stagedFiles=$(git diff --name-only --cached)
+                echo "$stagedFiles"
+                return 0
+            else
+                echo "Not a valid file: $toAdd" >&2
+                return 1
+            fi
+            ;;
+    esac
+}
+
+# Commit staged changes with a message
+commitChanges() {
+
+    local message="$1"
+
+    if [[ -z "$message" ]]; then
+        read -rp "Commit message: " message
+    fi
+
+    git commit -m "$message" || return 1
+}
+
+# Push changes to remote
+pushChanges() {
+
+    local remote
+    local branch
+
+    git rev-parse --abbrev-ref --symbolic-full-name @{u} >/dev/null 2>&1
+    local upStream=$?
+
+    if [[ "$upStream" -eq 0 ]]; then
+        git push
+        return 0
+    else
+        if promptYN "Want to set upstream?"; then
+            read -rp "Remote: " remote
+            read -rp "Branch: " branch
+            remote="${remote:-origin}"
+            branch="${branch:-$(git branch --show-current)}"
+            git push -u "$remote" "$branch"
+        else
+            echo "Aborting push. No upstream set." >&2
+            return 1
+        fi
+    fi
+}
+
+# Stage, commit and push in one command
+gitPush() {
+
+    local stageArgs="${1:-"-a"}"
+    local commitMsg="${@:2}"
+
+    if ! hasCommits; then
+        echo "No commits yet. Please make an initial commit first." >&2
+        return 1
+    fi
+  
+
+    stageFiles "$stageArgs" && commitChanges "$commitMsg" && pushChanges && echo "Changes pushed successfully"
+}
+
+# Run only if script is executed directly (not sourced)
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    promptYN "Want to create a .gitignore?"
+fi
