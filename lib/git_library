@@ -198,6 +198,55 @@ gitPush() {
     stageFiles "$stageArgs" && commitChanges "$commitMsg" && pushChanges && echo "Changes pushed successfully"
 }
 
+
+grpCreate(){
+
+    local groupName="$1"
+    local groupDir=".bashgit/groups"
+
+    if ! repoExists; then
+        echo "Not in a git repo root. Run this from your project root." >&2
+        exit 1
+    fi
+
+    if [[ -z "$groupName" ]]; then
+        read -rp "Enter group name: " groupName
+    fi
+
+    mkdir -p "$groupDir" || return 1
+
+    if [[ -f "$groupDir/$groupName" ]]; then
+        echo "Group '$groupName' already exists" >&2
+        return 1
+    fi
+
+    touch "$groupDir/$groupName" || return 1
+    echo "Group '$groupName' created"
+
+}
+
+grpAdd() {
+
+  local groupName="$1"
+  local fileName="$2"
+  local groupDir=".bashgit/groups"
+  local groupFile="$groupDir/$groupName"
+
+  if [[ -f "$groupName" ]];then 
+    echo "Group '$groupName' does not exist." >&2
+    return 1
+  fi
+
+  if ! grep -qxF "$fileName" "$groupFile"; then
+    echo "$fileName" >> "$groupFile"
+    echo "Added '$fileName' to group '$groupName'"
+  else
+    echo "'$fileName' is already in group '$groupName'" >&2
+    return 1
+  fi
+
+}
+
 # Run only if script is executed directly (not sourced)
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     promptYN "Want to create a .gitignore?"
