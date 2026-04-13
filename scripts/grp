@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/git_library"
+
+flag="$1"
+
+if [[ -z "$flag" ]]; then
+    echo "Usage: $0 <command> [arguments]"
+    exit 1
+fi
+
+case "$flag" in
+    -c|--create)
+        if [[ -z "$2" ]]; then
+            echo "Usage: $0 --create <group_name>"
+            exit 1
+        fi
+        grpCreate "$2"
+        ;;
+    -a|--add)
+        if [[ -z "$2" || -z "$3" ]]; then
+            echo "Usage: $0 --add <group_name> <file_name>"
+            exit 1
+        fi
+        grpAdd "$2" "$3"
+        ;;
+    -l|--list)
+        grpList
+        ;;
+    -s|--show)
+        grpShow "$2"
+        ;;
+    *)
+        echo "Invalid flag: $flag"
+        exit 1
+        ;;
+esac

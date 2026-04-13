@@ -130,6 +130,27 @@ stageFiles() {
                 return 1
             fi
             ;;
+                -ex)
+            local groupFile=".bashgit/groups/$fileName"
+
+            if [[ -z "$fileName" ]]; then
+                echo "Usage: stageFiles -ex <group_name>" >&2
+                return 1
+            fi
+
+            if [[ ! -f "$groupFile" ]]; then
+                echo "Group '$fileName' not found." >&2
+                return 1
+            fi
+
+            git status --porcelain \
+                | awk '{print $2}' \
+                | grep -v -F -f "$groupFile" \
+                | xargs -r git add
+
+            echo "Staged all files except group '$fileName'"
+            return 0
+        ;;
 
         *)
             if [[ -f "$toAdd" ]]; then
@@ -232,7 +253,7 @@ grpAdd() {
   local groupDir=".bashgit/groups"
   local groupFile="$groupDir/$groupName"
 
-  if [[ -f "$groupName" ]];then 
+  if [[ ! -f "$groupFile" ]];then 
     echo "Group '$groupName' does not exist." >&2
     return 1
   fi
@@ -246,6 +267,30 @@ grpAdd() {
   fi
 
 }
+
+grpList(){
+    local groupDir=".bashgit/groups"
+    ls "$groupDir" 2>/dev/null || echo "No groups found"
+}
+
+grpShow(){
+    local groupDir=".bashgit/groups"
+    local name="$1"
+
+    if [[ -z "$name" ]]; then
+        read -rp "Enter group name: " name
+    fi
+
+    local groupFile="$groupDir/$name"
+
+    if [[ -f "$groupFile" ]]; then
+        cat "$groupFile"
+    else
+        echo "Group '$name' not found." >&2
+        return 1
+    fi
+}
+
 
 # Run only if script is executed directly (not sourced)
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
