@@ -77,4 +77,6 @@ Backups are only created if the configuration file exists.
 - [x] `gacp` — stage, commit, push
 - [x] `grp` — file group management
 - [ ] `gbranch` — branch management
+- [ ] `uninstall` — script to delete bashgit "</3"
+- [ ] `gsync` — checking if its safe to push
 - [ ] v2: improved group workflows
