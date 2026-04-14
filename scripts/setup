@@ -1,5 +1,39 @@
 #!/usr/bin/env bash
 
+mkBackup() {
+  local shellName
+  local ts
+  shellName="$(basename "$SHELL")"
+  ts="$(date +%Y-%m-%d_%H-%M-%S)"
+
+  case "$shellName" in
+    fish)
+      [[ -f "$HOME/.config/fish/config.fish" ]] || return 1
+      cp "$HOME/.config/fish/config.fish" \
+         "$HOME/.config/fish/config.fish.bashgit.bak.$ts"
+      ;;
+
+    bash)
+      [[ -f "$HOME/.bashrc" ]] || return 1
+      cp "$HOME/.bashrc" \
+         "$HOME/.bashrc.bashgit.bak.$ts"
+      ;;
+
+    zsh)
+      [[ -f "$HOME/.zshrc" ]] || return 1
+      cp "$HOME/.zshrc" \
+         "$HOME/.zshrc.bashgit.bak.$ts"
+      ;;
+
+    *)
+      echo "Unsupported shell: $shellName" >&2
+      return 1
+      ;;
+  esac
+
+  echo "Backup created successfully for $shellName"
+}
+
 checkPath() {
     if [[ "$PATH" = *"$HOME/bashgit/scripts"* ]]; then
         return 0
@@ -54,6 +88,6 @@ addToPath() {
 
 
 
-
+mkBackup
 mkExe
 addToPath
