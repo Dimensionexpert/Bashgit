@@ -4,6 +4,12 @@ source "$(dirname "${BASH_SOURCE[0]}")/../lib/git_library"
 
 flag="$1"
 
+if ! repoExists; then
+    echo "Not in a git repo root." >&2
+    echo "Run this from your project root." >&2
+    exit 1
+fi
+
 if [[ -z "$flag" ]]; then
     echo "Usage: $0 <command> [arguments]"
     exit 1
@@ -15,14 +21,21 @@ case "$flag" in
             echo "Usage: $0 --create <group_name>"
             exit 1
         fi
-        grpCreate "$2"
+
+        for grpName in "${@:2}"; do
+            grpCreate "$grpName"
+        done
         ;;
+
     -a|--add)
         if [[ -z "$2" || -z "$3" ]]; then
             echo "Usage: $0 --add <group_name> <file_name>"
             exit 1
         fi
-        grpAdd "$2" "$3"
+        
+        for file in "${@:3}"; do
+             grpAdd "$2" "$file"
+        done
         ;;
     -l|--list)
         grpList
