@@ -10,7 +10,7 @@ A portable bash toolkit to simplify git workflows.
 ```bash
 git clone https://github.com/dimensionexpert/bashgit.git
 cd bashgit
-bash install
+bash setup
 ```
 
 ## Usage
