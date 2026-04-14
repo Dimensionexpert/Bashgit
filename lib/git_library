@@ -130,7 +130,7 @@ stageFiles() {
                 return 1
             fi
             ;;
-                -ex)
+        -ex)
             local groupFile=".bashgit/groups/$fileName"
 
             if [[ -z "$fileName" ]]; then
@@ -188,22 +188,27 @@ pushChanges() {
     local upStream=$?
 
     if [[ "$upStream" -eq 0 ]]; then
-        git push
-        return 0
+        git push || {
+            echo "Push failed" >&2
+            return 1
+        }
     else
         if promptYN "Want to set upstream?"; then
             read -rp "Remote: " remote
             read -rp "Branch: " branch
             remote="${remote:-origin}"
             branch="${branch:-$(git branch --show-current)}"
-            git push -u "$remote" "$branch"
+
+            git push -u "$remote" "$branch" || {
+                echo "Push failed" >&2
+                return 1
+            }
         else
             echo "Aborting push. No upstream set." >&2
             return 1
         fi
     fi
 }
-
 # Stage, commit and push in one command
 gitPush() {
 
