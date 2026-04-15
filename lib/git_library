@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-# Prompt the user with a Yes/No question.
-# Returns:
-#   0 (success) if user answers yes
-#   1 (failure) if user answers no
+# ─────────────────────────────────────────
+# UTILITIES
+# ─────────────────────────────────────────
+
 promptYN() {
 
     local msg="${1:-"Want to continue?"}"
-    local ans=
+    local ans
 
     while true; do
         read -rp "$msg [Y/n]: " ans
@@ -20,13 +20,15 @@ promptYN() {
     done
 }
 
-# Check if current directory is already a git repository
-# Returns 0 if .git directory exists, else 1
 repoExists() {
     [ -d ".git" ]
 }
 
-# Initialize a git repository if one doesn't already exist
+
+# ─────────────────────────────────────────
+# REPO MANAGEMENT
+# ─────────────────────────────────────────
+
 createRepo() {
 
     if repoExists; then
@@ -37,7 +39,6 @@ createRepo() {
     git init -q || return 1
 }
 
-# Show current branch and optionally rename it
 branchName() {
 
     local branch
@@ -55,7 +56,10 @@ branchName() {
     fi
 }
 
-# Create a .gitignore file if it doesn't exist
+# ─────────────────────────────────────────
+# FILE MANAGEMENT  
+# ─────────────────────────────────────────
+
 createGitignore() {
     if [ -f ".gitignore" ]; then
         echo ".gitignore already exists" >&2
@@ -66,7 +70,6 @@ createGitignore() {
     echo ".gitignore created"
 }
 
-# Create a README.md file if it doesn't exist
 createReadme() {
     if [ -f "README.md" ]; then
         echo "README.md already exists" >&2
@@ -77,17 +80,16 @@ createReadme() {
     echo "README.md created"
 }
 
-# Check if repository has at least one commit
+
+
+# ─────────────────────────────────────────
+# STAGING & COMMITS
+# ─────────────────────────────────────────
+
 hasCommits() {
     git rev-parse --verify HEAD >/dev/null 2>&1
 }
 
-# Stage files for commit
-# Usage:
-#   stageFiles -a         - stage all changes
-#   stageFiles -aq        - stage all quietly
-#   stageFiles -q <file>  - stage specific file quietly
-#   stageFiles <file>     - stage specific file
 stageFiles() {
 
     local toAdd="$1"
@@ -150,7 +152,7 @@ stageFiles() {
 
             echo "Staged all files except group '$fileName'"
             return 0
-        ;;
+            ;;
 
         *)
             if [[ -f "$toAdd" ]]; then
@@ -166,7 +168,6 @@ stageFiles() {
     esac
 }
 
-# Commit staged changes with a message
 commitChanges() {
 
     local message="$1"
@@ -178,7 +179,48 @@ commitChanges() {
     git commit -m "$message" || return 1
 }
 
-# Push changes to remote
+checkSync() {
+
+    git fetch -q >/dev/null || {
+        echo "Failed to fetch from remote" >&2
+        return 1
+    }
+
+    local localCommit originCommit baseCommit
+
+    localCommit=$(git rev-parse @)
+
+    originCommit=$(git rev-parse @{u} 2>/dev/null) || {
+        echo "No upstream set"
+        return 0
+    }
+
+    baseCommit=$(git merge-base @ @{u})
+
+    if [[ "$localCommit" = "$originCommit" ]]; then
+        echo "Up to date"
+        return 0
+
+    elif [[ "$localCommit" = "$baseCommit" ]]; then
+        echo "Need to pull"
+        git log --oneline HEAD..@{u}
+        return 1
+
+    elif [[ "$originCommit" = "$baseCommit" ]]; then
+        echo "Need to push"
+        return 0
+
+    else
+        echo "Branches are diverged"
+        echo "Remote changes:"
+        git log --oneline HEAD..@{u}
+        echo
+        echo "Local changes:"
+        git log --oneline @{u}..HEAD
+        return 1
+    fi
+}
+
 pushChanges() {
 
     local remote
@@ -209,7 +251,7 @@ pushChanges() {
         fi
     fi
 }
-# Stage, commit and push in one command
+
 gitPush() {
 
     local stageArgs="${1:-"-a"}"
@@ -219,11 +261,14 @@ gitPush() {
         echo "No commits yet. Please make an initial commit first." >&2
         return 1
     fi
-  
-
+    checkSync || return 1
     stageFiles "$stageArgs" && commitChanges "$commitMsg" && pushChanges && echo "Changes pushed successfully"
+
 }
 
+# ─────────────────────────────────────────
+# GROUP MANAGEMENT
+# ─────────────────────────────────────────
 
 grpCreate(){
 
@@ -274,11 +319,14 @@ grpAdd() {
 }
 
 grpList(){
+
     local groupDir=".bashgit/groups"
     ls "$groupDir" 2>/dev/null || echo "No groups found"
+
 }
 
 grpShow(){
+
     local groupDir=".bashgit/groups"
     local name="$1"
 
@@ -294,10 +342,5 @@ grpShow(){
         echo "Group '$name' not found." >&2
         return 1
     fi
+
 }
-
-
-# Run only if script is executed directly (not sourced)
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    promptYN "Want to create a .gitignore?"
-fi

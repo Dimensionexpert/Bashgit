@@ -48,6 +48,34 @@ grp -s groupname            # show files in group
 Groups are stored in `.bashgit/groups/` in your project root.
 Must be run from the root of a git repository.
 
+### `gsync` — Check sync status
+
+```bash
+gsync
+```
+
+Checks whether your local branch is:
+
+* up to date
+* ahead (safe to push)
+* behind (needs pull)
+* diverged (requires manual resolution)
+
+Also shows commit differences when applicable.
+
+### `uninstall` — Remove bashgit
+
+```bash
+uninstall
+```
+
+Removes bashgit from your system by:
+
+* deleting installed scripts
+* removing PATH entries
+
+Does not delete `.bashgit/` folders inside your projects.
+
 ## Backup
 
 During setup, Bashgit creates a backup of your shell configuration file.
@@ -73,10 +101,11 @@ config.fish.bashgit.bak.2026-04-14_20-45-26
 Backups are only created if the configuration file exists.
 
 ## Roadmap
-- [x] `gi` — repo initialization
-- [x] `gacp` — stage, commit, push
-- [x] `grp` — file group management
-- [ ] `gbranch` — branch management
-- [ ] `uninstall` — script to delete bashgit "</3"
-- [ ] `gsync` — checking if its safe to push
-- [ ] v2: improved group workflows
+
+* [x] `gi` — repo initialization
+* [x] `gacp` — stage, commit, push
+* [x] `grp` — file group management
+* [x] `uninstall` — script to delete bashgit "</3"
+* [x] `gsync` — checking if its safe to push
+* [ ] `gbranch` — branch management
+* [ ] v2: improved group workflows
