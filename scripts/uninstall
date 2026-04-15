@@ -2,12 +2,16 @@
 
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/git_library"
 
+#checking if path exist in shell config
 checkPaths(){
-    #checking if path exist in shell config
+
     echo "$PATH" | grep -q "$HOME/bashgit/scripts" && return 0 || return 1 
+
 }
 
+#checking if bashgit directory exist
 checkDir(){
+
     local dir
     dir="$HOME/bashgit"
 
@@ -18,6 +22,7 @@ checkDir(){
     fi
 }
 
+#removing path from shell config
 rmPaths(){
     local Dir
     local path
@@ -42,6 +47,7 @@ rmPaths(){
     esac
 }
 
+#removing bashgit directory
 rmDir(){
     local Dir
     Dir="$HOME/bashgit"
@@ -54,6 +60,7 @@ rmDir(){
     fi
 }
 
+# Main uninstallation logic
 if promptYN "Uninstall bashgit?"; then
     rmPaths || echo "Failed to remove paths" >&2
     rmDir || echo "Failed to delete directory" >&2
