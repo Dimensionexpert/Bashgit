@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/git_library"
+
+gitCommit(){
+    local message="$1"
+
+    if [[ -z "$message" ]]; then
+        echo "Usage: $0 <commit_message>" >&2
+        read -rp "Enter the commit message: " message
+        if [[ -z "$message" ]]; then
+            echo "Commit message cannot be empty. RETARD!!" >&2
+            return 1
+        fi
+    fi
+
+    if ! git diff --cached --quiet; then
+        git commit -m "$message"
+    else
+        echo "No changes to commit."
+    fi
+}
+
+
+gitCommit "$@"

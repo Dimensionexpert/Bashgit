@@ -114,24 +114,24 @@ stageFiles() {
             return 0
             ;;
 
-        -aq)
-            git add .
-            return 0
-            ;;
+        # -aq)
+        #     git add .
+        #     return 0
+        #     ;;
 
-        -q)
-            if [[ -z "$fileName" ]]; then
-                echo "No file specified for quiet mode" >&2
-                return 1
-            fi
-            if [[ -f "$fileName" ]]; then
-                git add "$fileName"
-                return 0
-            else
-                echo "Not a valid file: $fileName" >&2
-                return 1
-            fi
-            ;;
+        # -q)
+        #     if [[ -z "$fileName" ]]; then
+        #         echo "No file specified for quiet mode" >&2
+        #         return 1
+        #     fi
+        #     if [[ -f "$fileName" ]]; then
+        #         git add "$fileName"
+        #         return 0
+        #     else
+        #         echo "Not a valid file: $fileName" >&2
+        #         return 1
+        #     fi
+        #     ;;
         -ex)
             local groupFile=".bashgit/groups/$fileName"
 
