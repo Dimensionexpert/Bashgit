@@ -12,7 +12,7 @@ A portable bash toolkit to simplify git workflows.
 ```bash
 git clone https://github.com/dimensionexpert/bashgit.git
 cd bashgit
-bash setup
+bash scripts/install
 ```
 
 ## Usage
@@ -28,21 +28,45 @@ Sets up a new git repo, optionally renames branch, creates .gitignore, README, a
 ### `gacp` — Stage, commit and push
 
 ```bash
-gacp                        # stage all, prompt for commit message
-gacp -a "msg"               # stage all with message
-gacp -aq "msg"              # stage all quietly
-gacp file.txt "msg"         # stage specific file
-gacp -q file.txt "msg"      # stage specific file quietly
-gacp -ex groupname "msg"    # stage all except group
+gacp "msg"                    # stage all, commit and push
+gacp -a "msg"                 # stage all explicitly
+gacp -e groupname "msg"       # stage all except group
+gacp -q "msg"                 # stage all quietly
+gacp -eq groupname "msg"      # stage all except group, quietly
 ```
+
+Automatically checks sync status before staging. Will prompt to set upstream if not set.
+
+### `ga` — Stage files
+
+```bash
+ga -a                         # stage all
+ga -e groupname               # stage all except group
+ga file.txt                   # stage specific file
+```
+
+### `gc` — Commit
+
+```bash
+gc "msg"                      # commit with message
+gc                            # prompts for message if not provided
+```
+
+### `gp` — Push
+
+```bash
+gp                            # push to upstream
+```
+
+Handles no-commits and no-upstream cases interactively.
 
 ### `grp` — Manage file groups
 
 ```bash
-grp -c groupname            # create a group
-grp -a groupname file.txt   # add file to group
-grp -l                      # list all groups
-grp -s groupname            # show files in group
+grp -c groupname              # create a group
+grp -a groupname file.txt     # add file to group
+grp -l                        # list all groups
+grp -s groupname              # show files in group
 ```
 
 Groups are stored in `.bashgit/groups/` in your project root.
@@ -78,7 +102,7 @@ Does not delete `.bashgit/` folders inside your projects.
 
 ## Backup
 
-During setup, Bashgit creates a backup of your shell configuration file.
+During install, Bashgit creates a backup of your shell configuration file.
 
 Supported shells:
 
@@ -103,9 +127,10 @@ Backups are only created if the configuration file exists.
 ## Roadmap
 
 * [x] `gi` — repo initialization
-* [x] `gacp` — stage, commit, push
+* [x] `gacp` — stage, commit, push with sync check
+* [x] `ga` / `gc` / `gp` — granular git controls
 * [x] `grp` — file group management
-* [x] `uninstall` — script to delete bashgit "</3"
-* [x] `gsync` — checking if its safe to push
+* [x] `gsync` — sync status check
+* [x] `uninstall` — remove bashgit
+* [ ] background fetch with throttling
 * [ ] `gbranch` — branch management
-* [ ] v2: improved group workflows
