@@ -249,7 +249,6 @@ gitPush(){
         return 1
     }
 
-    echo "Push successful!"
     return 0   
 }
 
