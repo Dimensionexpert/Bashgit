@@ -90,93 +90,79 @@ hasCommits() {
     git rev-parse --verify HEAD >/dev/null 2>&1
 }
 
-stageFiles() {
+gitAdd(){
+    local input="$1"
+    local userGroupName="$2"
+    local groupName=".bashgit/groups/$userGroupName"
 
-    local toAdd="$1"
-    local fileName="$2"
-    local stagedFiles
-
-    if [[ -z "$toAdd" ]]; then
-        echo "usage:"
-        echo "  stageFiles <file>     - stage specific file"
-        echo "  stageFiles -a         - stage all changes"
-        echo "  stageFiles -aq        - stage all quietly"
-        echo "  stageFiles -q <file>  - stage specific file quietly"
-        return 1
-    fi
-
-    case "$toAdd" in
+    case "$input" in
         -a)
-            git add .
-            stagedFiles=$(git diff --name-only --cached)
-            echo "Files staged:"
-            echo "$stagedFiles"
-            return 0
+            git add . || return 1
             ;;
 
-        -aq)
-            git add .
-            return 0
-            ;;
-
-        -q)
-            if [[ -z "$fileName" ]]; then
-                echo "No file specified for quiet mode" >&2
-                return 1
-            fi
-            if [[ -f "$fileName" ]]; then
-                git add "$fileName"
-                return 0
-            else
-                echo "Not a valid file: $fileName" >&2
-                return 1
-            fi
-            ;;
-        -ex)
-            local groupFile=".bashgit/groups/$fileName"
-
-            if [[ -z "$fileName" ]]; then
-                echo "Usage: stageFiles -ex <group_name>" >&2
+        -e)
+            if [[ -z "$userGroupName" ]]; then
+                echo "Usage: -e <user_group_name>"
+                promptYN "Do you want to see available groups?" && grpList
                 return 1
             fi
 
-            if [[ ! -f "$groupFile" ]]; then
-                echo "Group '$fileName' not found." >&2
+            if [[ ! -f "$groupName" ]]; then
+                echo "Group '$userGroupName' does not exist." >&2
+                promptYN "Do you want to see available groups?" && grpList
                 return 1
             fi
 
             git status --porcelain \
-                | awk '{print $2}' \
-                | grep -v -F -f "$groupFile" \
-                | xargs -r git add
-
-            echo "Staged all files except group '$fileName'"
-            return 0
+                | awk '{print substr($0, 4)}' \
+                | grep -v -F -f "$groupName" \
+                | xargs -r -d '\n' git add || return 1
             ;;
 
         *)
-            if [[ -f "$toAdd" ]]; then
-                git add "$toAdd"
-                stagedFiles=$(git diff --name-only --cached)
-                echo "$stagedFiles"
-                return 0
+            if [[ -e "$input" ]]; then
+                git add "$input" || return 1
             else
-                echo "Not a valid file: $toAdd" >&2
+                echo "Not a valid file: $input" >&2
                 return 1
             fi
             ;;
     esac
+
+    local stagedFiles
+    stagedFiles="$(git diff --name-only --cached)"
+
+    if [[ -n "$stagedFiles" ]]; then
+        echo "Staged files:"
+        echo "$stagedFiles"
+    else
+        echo "No files staged."
+    fi
+
+    return 0
+
+   
 }
 
-commitChanges() {
-
+gitCommit(){
     local message="$1"
 
     if [[ -z "$message" ]]; then
-        read -rp "Commit message: " message
+        echo "Usage: $0 <commit_message>" >&2
+        read -rp "Enter the commit message: " message
+        if [[ -z "$message" ]]; then
+            echo "Commit message cannot be empty. RETARD!!" >&2
+            return 1
+        fi
     fi
 
-    git commit -m "$message" || return 1
+    if ! git diff --cached --quiet; then
+        git commit -m "$message" || return 1
+        return 0
+    else
+        echo "No changes to commit."
+        return 0
+    fi
 }
 
 checkSync() {
@@ -221,23 +207,27 @@ checkSync() {
     fi
 }
 
-pushChanges() {
+gitPush(){
 
-    local remote
-    local branch
+    local hasUpstream
+    hasUpstream="$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null)"
 
-    git rev-parse --abbrev-ref --symbolic-full-name @{u} >/dev/null 2>&1
-    local upStream=$?
-
-    if [[ "$upStream" -eq 0 ]]; then
-        git push || {
-            echo "Push failed" >&2
+    if ! hasCommits; then 
+        echo "No commits yet. Please make commit first."
+        if promptYN "Do you want to initialize now?"; then
+            gi || return 1
+        else
+            echo "Aborting push. No commits to push." >&2
             return 1
-        }
-    else
-        if promptYN "Want to set upstream?"; then
+        fi
+    fi  
+
+    if [[ -z "$hasUpstream" ]]; then
+        echo "No upstream branch set."
+        if promptYN "Do you want to set upstream?"; then
             read -rp "Remote: " remote
             read -rp "Branch: " branch
+
             remote="${remote:-origin}"
             branch="${branch:-$(git branch --show-current)}"
 
@@ -245,25 +235,57 @@ pushChanges() {
                 echo "Push failed" >&2
                 return 1
             }
+
+            echo "Upstream set and pushed."
+            return 0
         else
             echo "Aborting push. No upstream set." >&2
             return 1
         fi
     fi
+
+    git push || {
+        echo "Push failed" >&2
+        return 1
+    }
+
+    return 0   
 }
 
-gitPush() {
+gitStageCommitPush() {
 
-    local stageArgs="${1:-"-a"}"
-    local commitMsg="${@:2}"
+    local flag groupName commitMessage
 
-    if ! hasCommits; then
-        echo "No commits yet. Please make an initial commit first." >&2
-        return 1
+    if [[ "$1" == -* ]]; then
+        flag="$1"
+        groupName="$2"
+        commitMessage="${@:3}"
+    else
+        flag="-a"
+        groupName=""
+        commitMessage="${@:1}"
     fi
-    checkSync || return 1
-    stageFiles "$stageArgs" && commitChanges "$commitMsg" && pushChanges && echo "Changes pushed successfully"
 
+    checkSync || return 1
+
+    case "$flag" in
+        -a)
+            gitAdd "$flag" && gitCommit "$commitMessage" && gitPush && echo "Pushed successfully :)"
+            ;;
+        -e)
+            gitAdd "$flag" "$groupName" && gitCommit "$commitMessage" && gitPush && echo "Pushed successfully :)"
+            ;;
+        -q)
+            gitAdd -a >/dev/null && gitCommit "$commitMessage" >/dev/null && gitPush >/dev/null && echo "Pushed successfully :)"
+            ;;
+        -eq)
+            gitAdd -e "$groupName" >/dev/null && gitCommit "$commitMessage" >/dev/null && gitPush >/dev/null && echo "Pushed successfully :)"
+            ;;
+        *)
+            echo "Invalid flag." >&2
+            return 1
+            ;;
+    esac
 }
 
 # ─────────────────────────────────────────

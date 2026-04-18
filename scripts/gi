@@ -5,7 +5,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/../lib/git_library"
 
 # Exit early if repo already exists
 if repoExists; then
-    echo "Repo already exists. Use gitPush to commit and push. love <3" >&2
+    echo "Repo already exists. Use gitPush to stage, commit and push. love <3" >&2
     exit 0
 fi
 
