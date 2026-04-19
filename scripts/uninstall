@@ -21,32 +21,6 @@ checkDir(){
         return 1
     fi
 }
-
-#removing path from shell config
-rmPaths(){
-    local Dir
-    local path
-    local shellName
-    shellName="$(basename "$SHELL")"
-    Dir="$HOME/bashgit/scripts"
-
-    case "$shellName" in 
-        fish)
-        fish -c "set -U fish_user_paths (string match -v '*bashgit*' \$fish_user_paths)" 
-        ;;
-        bash)
-        sed -i '' '/bashgit\/scripts/d' "$HOME/.bashrc"
-        ;;
-        zsh)
-        sed -i '' '/bashgit\/scripts/d' "$HOME/.zshrc"
-        ;;
-        *)
-        echo "Unsupported shell: $shellName" >&2
-        return 1
-        ;;
-    esac
-}
-
 #removing bashgit directory
 rmDir(){
     local Dir
