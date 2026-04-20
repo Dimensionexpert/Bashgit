@@ -45,9 +45,9 @@ checkPath() {
 
 mkExe() {
 
-local path="$HOME/bashgit/scripts/*"
+local path="$HOME/bashgit/scripts"
 
-    for file in "$path"; do
+    for file in "$path"/*; do
         if [[ -f "$file" &&  ! -x "$file" ]]; then # -x checks the if "$file" exists and have execute permission
             chmod +x "$file"
             echo "Made $file executable"
