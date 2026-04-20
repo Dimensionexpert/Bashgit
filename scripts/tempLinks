@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+mkLink(){
+
+    local regDir="$HOME/bashgit/register"
+    mkdir -p "$regDir"
+    
+}
+
+mkLink 
