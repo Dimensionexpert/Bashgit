@@ -24,6 +24,33 @@ repoExists() {
     [ -d ".git" ]
 }
 
+changeBit(){
+  
+  local fileName="$1"
+  local status
+ 
+  if [[ -z "$fileName" ]]; then
+    echo "fileName can't be empty"
+    return 1
+  fi
+
+  if [[ ! -f "$fileName" ]]; then
+    echo "File not found: $fileName"
+    return 1
+  fi
+  
+  if [[ -x "$fileName" ]];then
+    chmod -x "$fileName"
+    echo  "Removed -x bit" 
+  else  
+    chmod +x "$fileName"
+    echo "Added -x bit" 
+  fi 
+
+
+  echo "Changes: $(ls -l "$fileName")"
+  return 0 
+}
 
 # ─────────────────────────────────────────
 # REPO MANAGEMENT
