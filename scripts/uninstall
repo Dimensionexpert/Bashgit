@@ -34,6 +34,36 @@ rmDir(){
     fi
 }
 
+rmPaths() {
+
+    local shellName machName sedCmd
+    shellName="$(basename "$SHELL")"
+    machName="$(uname)"
+
+    if [[ "$machName" == "Linux" ]]; then
+        sedCmd="sed -i"
+    else
+        sedCmd="sed -i ''"
+    fi
+
+    case "$shellName" in
+        fish)
+            fish -c "set -U fish_user_paths (string match -v '*bashgit*' \$fish_user_paths)"
+            ;;
+        bash)
+            $sedCmd '/bashgit\/scripts/d' "$HOME/.bashrc"
+            ;;
+        zsh)
+            $sedCmd '/bashgit\/scripts/d' "$HOME/.zshrc"
+            ;;
+        *)
+            echo "Unsupported shell: $shellName" >&2
+            return 1
+            ;;
+    esac
+    
+}
+
 # Main uninstallation logic
 if promptYN "Uninstall bashgit?"; then
     rmPaths || echo "Failed to remove paths" >&2
