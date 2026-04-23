@@ -24,32 +24,32 @@ repoExists() {
     [ -d ".git" ]
 }
 
-changeBit(){
-  
-  local fileName="$1"
-  local status
- 
-  if [[ -z "$fileName" ]]; then
-    echo "fileName can't be empty"
-    return 1
-  fi
 
-  if [[ ! -f "$fileName" ]]; then
-    echo "File not found: $fileName"
-    return 1
-  fi
-  
-  if [[ -x "$fileName" ]];then
-    chmod -x "$fileName"
-    echo  "Removed -x bit" 
-  else  
-    chmod +x "$fileName"
-    echo "Added -x bit" 
-  fi 
+changeBit() {
+  for path in "$@"; do
 
+    if [[ -z "$path" ]]; then
+      echo "Path can't be empty"
+      continue
+    fi
 
-  echo "Changes: $(ls -l "$fileName")"
-  return 0 
+    if [[ ! -f "$path" ]]; then
+      echo "File not found: $path"
+      continue
+    fi
+
+    if [[ -x "$path" ]]; then
+      chmod -x "$path"
+      echo "Removed execute bit: $path"
+    else
+      chmod +x "$path"
+      echo "Added execute bit: $path"
+    fi
+
+    stat -c '%A %n' "$path"
+
+  done
+  return 0
 }
 
 # ─────────────────────────────────────────
